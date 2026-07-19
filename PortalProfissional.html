@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta
+    name="theme-color"
+    content="#345c65"
+  >
+
+  <title>
+    Árya Saúde — Portal Profissional
+  </title>
+
+  <?!= appIncluirHtml('PortalEstilos'); ?>
+</head>
+
+<body>
+  <!-- ======================================================
+       ÁRYA SAÚDE
+       PORTAL PROFISSIONAL
+       ARQUIVO PRINCIPAL DA INTERFACE
+       ====================================================== -->
+
+  <div
+    id="telaCarregamento"
+    class="tela-carregamento"
+    aria-live="polite"
+  >
+    <div class="carregamento-conteudo">
+      <div class="carregamento-marca">
+        ÁRYA SAÚDE
+      </div>
+
+      <div
+        class="carregamento-spinner"
+        aria-hidden="true"
+      ></div>
+
+      <div class="carregamento-texto">
+        Carregando o portal profissional...
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ======================================================
+       CABEÇALHO
+       ====================================================== -->
+
+  <header class="cabecalho">
+    <div class="cabecalho-conteudo">
+      <div class="identidade">
+        <div
+          class="identidade-simbolo"
+          aria-hidden="true"
+        >
+          Á
+        </div>
+
+        <div class="identidade-textos">
+          <div class="marca">
+            ÁRYA SAÚDE
+          </div>
+
+          <div class="subtitulo">
+            Portal profissional
+          </div>
+        </div>
+      </div>
+
+      <div class="usuario">
+        <div class="usuario-dados">
+          <div
+            id="usuarioNome"
+            class="usuario-nome"
+          >
+            Carregando...
+          </div>
+
+          <div
+            id="usuarioEmail"
+            class="usuario-email"
+          ></div>
+        </div>
+
+        <div
+          id="usuarioAvatar"
+          class="usuario-avatar"
+          aria-label="Usuário conectado"
+        >
+          —
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- ======================================================
+       ESTRUTURA PRINCIPAL
+       ====================================================== -->
+
+  <div class="aplicacao">
+
+    <!-- MENU LATERAL -->
+
+    <aside
+      class="menu-lateral"
+      aria-label="Menu principal"
+    >
+      <div class="menu-cabecalho">
+        <div class="menu-cabecalho-titulo">
+          Navegação
+        </div>
+      </div>
+
+      <nav>
+        <ul class="menu-lista">
+          <li class="menu-item">
+            <button
+              class="menu-botao ativo"
+              type="button"
+              data-pagina="dashboard"
+              onclick="app.navegar('dashboard')"
+            >
+              <span
+                class="menu-icone"
+                aria-hidden="true"
+              >
+                ⌂
+              </span>
+
+              <span class="menu-texto">
+                Dashboard
+              </span>
+            </button>
+          </li>
+
+          <li class="menu-item">
+            <button
+              class="menu-botao"
+              type="button"
+              data-pagina="novo-protocolo"
+              onclick="app.navegar('novo-protocolo')"
+            >
+              <span
+                class="menu-icone"
+                aria-hidden="true"
+              >
+                ＋
+              </span>
+
+              <span class="menu-texto">
+                Novo protocolo
+              </span>
+            </button>
+          </li>
+
+          <li class="menu-item">
+            <button
+              class="menu-botao"
+              type="button"
+              data-pagina="meus-protocolos"
+              onclick="app.navegar('meus-protocolos')"
+            >
+              <span
+                class="menu-icone"
+                aria-hidden="true"
+              >
+                ▣
+              </span>
+
+              <span class="menu-texto">
+                Meus protocolos
+              </span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="menu-rodape">
+        Árya Saúde<br>
+        Sistema de faturamento
+      </div>
+    </aside>
+
+
+    <!-- CONTEÚDO -->
+
+    <main
+      id="conteudoPrincipal"
+      class="conteudo"
+      tabindex="-1"
+    >
+      <?!= appIncluirHtml('PortalDashboard'); ?>
+
+      <?!= appIncluirHtml('PortalNovoProtocolo'); ?>
+
+      <?!= appIncluirHtml('PortalProtocolos'); ?>
+    </main>
+  </div>
+
+
+  <!-- ======================================================
+       MENU PARA CELULAR
+       ====================================================== -->
+
+  <nav
+    class="menu-mobile"
+    aria-label="Menu principal para celular"
+  >
+    <button
+      class="menu-mobile-botao ativo"
+      type="button"
+      data-pagina-mobile="dashboard"
+      onclick="app.navegar('dashboard')"
+    >
+      <span
+        class="menu-mobile-icone"
+        aria-hidden="true"
+      >
+        ⌂
+      </span>
+
+      <span class="menu-mobile-texto">
+        Início
+      </span>
+    </button>
+
+    <button
+      class="menu-mobile-botao"
+      type="button"
+      data-pagina-mobile="novo-protocolo"
+      onclick="app.navegar('novo-protocolo')"
+    >
+      <span
+        class="menu-mobile-icone"
+        aria-hidden="true"
+      >
+        ＋
+      </span>
+
+      <span class="menu-mobile-texto">
+        Novo
+      </span>
+    </button>
+
+    <button
+      class="menu-mobile-botao"
+      type="button"
+      data-pagina-mobile="meus-protocolos"
+      onclick="app.navegar('meus-protocolos')"
+    >
+      <span
+        class="menu-mobile-icone"
+        aria-hidden="true"
+      >
+        ▣
+      </span>
+
+      <span class="menu-mobile-texto">
+        Protocolos
+      </span>
+    </button>
+  </nav>
+
+
+  <!-- ======================================================
+       MENSAGENS GLOBAIS
+       ====================================================== -->
+
+  <div
+    id="mensagemGlobal"
+    class="mensagem-global"
+    role="status"
+    aria-live="polite"
+  ></div>
+
+
+  <!-- ======================================================
+       DADOS INICIAIS DO SERVIDOR
+       ====================================================== -->
+
+  <script>
+    const DADOS_INICIAIS =
+      <?!= JSON.stringify(dadosIniciais || {}) ?>;
+  </script>
+
+
+  <!-- ======================================================
+       CONTROLADOR DA INTERFACE
+       ====================================================== -->
+
+  <?!= appIncluirHtml('PortalScripts'); ?>
+</body>
+</html>

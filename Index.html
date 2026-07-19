@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>Árya Saúde — Gestão Administrativa</title>
+
+  <style>
+    :root {
+      --cor-fundo: #f4f7f8;
+      --cor-painel: #ffffff;
+      --cor-texto: #263238;
+      --cor-secundaria: #607d8b;
+      --cor-borda: #dce4e7;
+      --cor-principal: #345c65;
+      --cor-sucesso: #2e7d32;
+      --cor-sucesso-fundo: #e8f5e9;
+      --cor-erro: #b3261e;
+      --cor-erro-fundo: #fce8e6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--cor-fundo);
+      color: var(--cor-texto);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    header {
+      background: var(--cor-painel);
+      border-bottom: 1px solid var(--cor-borda);
+      padding: 18px 24px;
+    }
+
+    .cabecalho-conteudo {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .marca {
+      color: var(--cor-principal);
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+    }
+
+    .subtitulo {
+      margin-top: 4px;
+      color: var(--cor-secundaria);
+      font-size: 14px;
+    }
+
+    .usuario {
+      text-align: right;
+    }
+
+    .usuario-nome {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .usuario-email {
+      margin-top: 3px;
+      color: var(--cor-secundaria);
+      font-size: 13px;
+    }
+
+    main {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    .painel {
+      background: var(--cor-painel);
+      border: 1px solid var(--cor-borda);
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 28px;
+      line-height: 1.25;
+    }
+
+    p {
+      margin: 0;
+      color: var(--cor-secundaria);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .status {
+      margin-top: 24px;
+      padding: 14px 16px;
+      border-radius: 9px;
+      background: var(--cor-sucesso-fundo);
+      color: var(--cor-sucesso);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .informacoes {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(
+        3,
+        minmax(0, 1fr)
+      );
+      gap: 14px;
+    }
+
+    .informacao {
+      padding: 16px;
+      border: 1px solid var(--cor-borda);
+      border-radius: 10px;
+      background: #fafcfc;
+    }
+
+    .informacao-titulo {
+      color: var(--cor-secundaria);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .informacao-valor {
+      margin-top: 7px;
+      font-size: 15px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .mensagem {
+      display: none;
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 9px;
+    }
+
+    .mensagem.erro {
+      display: block;
+      color: var(--cor-erro);
+      background: var(--cor-erro-fundo);
+    }
+
+    @media (max-width: 760px) {
+      .cabecalho-conteudo {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .usuario {
+        text-align: left;
+      }
+
+      .informacoes {
+        grid-template-columns: 1fr;
+      }
+
+      main {
+        padding: 20px 14px;
+      }
+
+      .painel {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="cabecalho-conteudo">
+      <div>
+        <div class="marca">
+          ÁRYA SAÚDE
+        </div>
+
+        <div class="subtitulo">
+          Gestão administrativa
+        </div>
+      </div>
+
+      <div class="usuario">
+        <div
+          id="usuarioNome"
+          class="usuario-nome"
+        >
+          Carregando...
+        </div>
+
+        <div
+          id="usuarioEmail"
+          class="usuario-email"
+        ></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="painel">
+      <h1>
+        Área administrativa
+      </h1>
+
+      <p>
+        O acesso administrativo foi identificado corretamente.
+        Esta é a tela inicial provisória para validação do
+        roteamento do sistema.
+      </p>
+
+      <div class="status">
+        Roteamento administrativo funcionando.
+      </div>
+
+      <div class="informacoes">
+        <div class="informacao">
+          <div class="informacao-titulo">
+            Sistema
+          </div>
+
+          <div
+            id="sistema"
+            class="informacao-valor"
+          >
+            —
+          </div>
+        </div>
+
+        <div class="informacao">
+          <div class="informacao-titulo">
+            Perfil
+          </div>
+
+          <div
+            id="perfil"
+            class="informacao-valor"
+          >
+            —
+          </div>
+        </div>
+
+        <div class="informacao">
+          <div class="informacao-titulo">
+            Horário do servidor
+          </div>
+
+          <div
+            id="dataHoraServidor"
+            class="informacao-valor"
+          >
+            —
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="mensagem"
+        class="mensagem"
+      ></div>
+    </section>
+  </main>
+
+  <script>
+    const DADOS_INICIAIS =
+      <?!= JSON.stringify(dadosIniciais || {}) ?>;
+
+    function definirTexto(
+      id,
+      valor
+    ) {
+      const elemento =
+        document.getElementById(id);
+
+      if (!elemento) {
+        return;
+      }
+
+      elemento.textContent =
+        valor === undefined ||
+        valor === null ||
+        valor === ''
+          ? '—'
+          : String(valor);
+    }
+
+    function mostrarErro(erro) {
+      const elemento =
+        document.getElementById(
+          'mensagem'
+        );
+
+      elemento.textContent =
+        erro && erro.message
+          ? erro.message
+          : String(erro);
+
+      elemento.className =
+        'mensagem erro';
+    }
+
+    function preencherDadosIniciais() {
+      const usuario =
+        DADOS_INICIAIS.usuario || {};
+
+      definirTexto(
+        'usuarioNome',
+        usuario.NOME ||
+        usuario.EMAIL ||
+        'Usuário administrativo'
+      );
+
+      definirTexto(
+        'usuarioEmail',
+        usuario.EMAIL || ''
+      );
+
+      definirTexto(
+        'sistema',
+        DADOS_INICIAIS.sistema ||
+        'Árya Saúde'
+      );
+
+      definirTexto(
+        'perfil',
+        usuario.PERFIL || ''
+      );
+    }
+
+    function carregarSessao() {
+      google.script.run
+        .withSuccessHandler(
+          function(sessao) {
+            definirTexto(
+              'dataHoraServidor',
+              sessao.dataHoraServidor
+            );
+          }
+        )
+        .withFailureHandler(
+          mostrarErro
+        )
+        .appObterSessao();
+    }
+
+    preencherDadosIniciais();
+    carregarSessao();
+  </script>
+</body>
+</html>
