@@ -29,9 +29,64 @@
        ARQUIVO PRINCIPAL DA INTERFACE
        ====================================================== -->
 
+  <!-- ======================================================
+       LOGIN (e-mail e senha próprios da aplicação)
+       ====================================================== -->
+
+  <div id="telaLogin" class="tela-login">
+    <div class="login-caixa">
+      <div class="login-marca">ÁRYA SAÚDE</div>
+
+      <div class="login-subtitulo">
+        Portal profissional
+      </div>
+
+      <form id="formLogin" class="login-form" autocomplete="on">
+        <label class="login-campo">
+          <span>E-mail</span>
+          <input
+            type="email"
+            id="loginEmail"
+            name="email"
+            autocomplete="username"
+            required
+          >
+        </label>
+
+        <label class="login-campo">
+          <span>Senha</span>
+          <input
+            type="password"
+            id="loginSenha"
+            name="senha"
+            autocomplete="current-password"
+            minlength="4"
+            required
+          >
+        </label>
+
+        <button type="submit" class="login-botao" id="loginBotao">
+          Entrar
+        </button>
+
+        <div class="login-ajuda">
+          Primeiro acesso? Digite seu e-mail cadastrado na Árya Saúde e
+          crie uma senha — ela passa a ser sua senha de acesso.
+        </div>
+
+        <div
+          id="loginErro"
+          class="login-erro oculto"
+          role="alert"
+        ></div>
+      </form>
+    </div>
+  </div>
+
+
   <div
     id="telaCarregamento"
-    class="tela-carregamento"
+    class="tela-carregamento oculto"
     aria-live="polite"
   >
     <div class="carregamento-conteudo">
@@ -50,6 +105,8 @@
     </div>
   </div>
 
+
+  <div id="appPrincipal" class="oculto">
 
   <!-- ======================================================
        CABEÇALHO
@@ -98,6 +155,15 @@
         >
           —
         </div>
+
+        <button
+          type="button"
+          id="botaoSair"
+          class="botao-sair"
+          onclick="app.sair()"
+        >
+          Sair
+        </button>
       </div>
     </div>
   </header>
@@ -299,5 +365,9 @@
        ====================================================== -->
 
   <?!= appIncluirHtml('PortalScripts'); ?>
+
+  </div>
+  <!-- fecha #appPrincipal -->
+
 </body>
 </html>

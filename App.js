@@ -56,65 +56,44 @@ const APP_CONFIG = {
  */
 function doGet(evento) {
   try {
-    const usuario =
-      authObterUsuarioAtual();
+    // A identificação abaixo depende da conta Google ativa no
+    // navegador (Session.getActiveUser()). Isso é confiável para
+    // quem acessa a partir do mesmo domínio Google Workspace de
+    // quem publicou o aplicativo (tipicamente a administração).
+    //
+    // Os profissionais acessam com contas de Gmail próprias, então
+    // essa identificação automática não é confiável para eles: por
+    // isso, sempre que ela não resolver em ADMINISTRADOR ou
+    // ADMINISTRATIVO, a aplicação cai para o Portal Profissional,
+    // que tem seu próprio login (e-mail e senha) na tela — ver
+    // Auth.gs (authEntrar / authValidarSessao) e PortalScripts.html.
+    let usuario = null;
 
-    if (!usuario) {
-      return appCriarTelaMensagem_(
-        'Acesso não autorizado',
-        'O e-mail da conta Google utilizada não está cadastrado no sistema.'
-      );
+    try {
+      usuario = authObterUsuarioAtual();
+    } catch (erroIdentificacao) {
+      usuario = null;
     }
 
-    if (!authUsuarioEstaAtivo(usuario)) {
-      return appCriarTelaMensagem_(
-        'Usuário inativo',
-        'Seu acesso ao sistema está inativo. Procure a administração da Árya Saúde.'
-      );
+    if (usuario && authUsuarioEstaAtivo(usuario)) {
+      const perfil =
+        authPerfilNormalizado(usuario);
+
+      if (
+        perfil === AUTH_CONFIG.PERFIS.ADMINISTRADOR ||
+        perfil === AUTH_CONFIG.PERFIS.ADMINISTRATIVO
+      ) {
+        return appRenderizarPagina_(
+          APP_CONFIG.ARQUIVO_ADMINISTRATIVO,
+          APP_CONFIG.TITULO_ADMINISTRATIVO,
+          usuario
+        );
+      }
     }
 
-    const perfil =
-      authPerfilNormalizado(usuario);
-
-    if (
-      perfil ===
-      AUTH_CONFIG.PERFIS.ADMINISTRADOR
-    ) {
-      return appRenderizarPagina_(
-        APP_CONFIG.ARQUIVO_ADMINISTRATIVO,
-        APP_CONFIG.TITULO_ADMINISTRATIVO,
-        usuario
-      );
-    }
-
-    if (
-      perfil ===
-      AUTH_CONFIG.PERFIS.ADMINISTRATIVO
-    ) {
-      return appRenderizarPagina_(
-        APP_CONFIG.ARQUIVO_ADMINISTRATIVO,
-        APP_CONFIG.TITULO_ADMINISTRATIVO,
-        usuario
-      );
-    }
-
-    if (
-      perfil ===
-      AUTH_CONFIG.PERFIS.PROFISSIONAL
-    ) {
-      const contextoProfissional =
-        authExigirProfissional();
-
-      return appRenderizarPagina_(
-        APP_CONFIG.ARQUIVO_PROFISSIONAL,
-        APP_CONFIG.TITULO_PROFISSIONAL,
-        contextoProfissional.usuario
-      );
-    }
-
-    return appCriarTelaMensagem_(
-      'Perfil sem acesso',
-      'O perfil cadastrado para este usuário não possui acesso à aplicação.'
+    return appRenderizarPaginaPublica_(
+      APP_CONFIG.ARQUIVO_PROFISSIONAL,
+      APP_CONFIG.TITULO_PROFISSIONAL
     );
   } catch (erro) {
     console.error(
@@ -127,6 +106,55 @@ function doGet(evento) {
       appObterMensagemErro_(erro)
     );
   }
+}
+
+
+/**
+ * Renderiza uma página sem exigir identificação prévia via conta
+ * Google. Usado pelo Portal Profissional, que faz seu próprio
+ * login (e-mail e senha) inteiramente no cliente, depois de a
+ * página já estar carregada.
+ *
+ * @param {string} nomeArquivo
+ * @param {string} titulo
+ * @return {HtmlOutput}
+ */
+function appRenderizarPaginaPublica_(
+  nomeArquivo,
+  titulo
+) {
+  if (!nomeArquivo) {
+    throw new Error(
+      'O nome do arquivo HTML não foi informado.'
+    );
+  }
+
+  const template =
+    HtmlService.createTemplateFromFile(
+      nomeArquivo
+    );
+
+  template.dadosIniciais = {
+    sistema:
+      APP_CONFIG.NOME_SISTEMA,
+
+    usuario:
+      null
+  };
+
+  return template
+    .evaluate()
+    .setTitle(
+      titulo ||
+      APP_CONFIG.NOME_SISTEMA
+    )
+    .setXFrameOptionsMode(
+      HtmlService.XFrameOptionsMode.ALLOWALL
+    )
+    .addMetaTag(
+      'viewport',
+      'width=device-width, initial-scale=1'
+    );
 }
 
 

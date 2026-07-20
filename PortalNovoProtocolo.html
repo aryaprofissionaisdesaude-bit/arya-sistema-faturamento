@@ -1,0 +1,91 @@
+<section class="pagina" data-pagina="novo-protocolo" id="pagina-novo-protocolo">
+  <div class="cartao">
+    <h1 class="cartao-titulo">Novo protocolo</h1>
+    <p class="cartao-subtitulo">
+      Adicione as guias (convênio e/ou particular) uma por uma. Ao final,
+      gere o protocolo — o número é criado automaticamente e o PDF fica
+      pronto para impressão.
+    </p>
+
+    <div class="linha-campos">
+      <label class="campo">
+        <span>Tipo de guia</span>
+        <select id="novaGuiaTipo" onchange="app.alternarTipoGuia()">
+          <option value="CONVENIO">Convênio</option>
+          <option value="PARTICULAR">Particular</option>
+        </select>
+      </label>
+
+      <label class="campo">
+        <span>Paciente</span>
+        <input
+          type="text"
+          id="novaGuiaPaciente"
+          list="listaPacientes"
+          placeholder="Nome do paciente"
+          oninput="app.selecionarPacienteDigitado()"
+        >
+        <datalist id="listaPacientes"></datalist>
+      </label>
+
+      <label class="campo" id="campoConvenio">
+        <span>Convênio</span>
+        <input type="text" id="novaGuiaConvenio" placeholder="Nome do convênio">
+      </label>
+
+      <label class="campo oculto" id="campoValor">
+        <span>Valor (sessão/pacote)</span>
+        <input type="number" id="novaGuiaValor" min="0" step="0.01" placeholder="0,00">
+      </label>
+
+      <label class="campo oculto" id="campoFormatoPagamento">
+        <span>Formato de pagamento</span>
+        <select id="novaGuiaFormatoPagamento">
+          <option value="ADIANTADO_SESSAO">Paga adiantado por sessão</option>
+          <option value="ADIANTADO_MES">Paga adiantado por mês</option>
+          <option value="ATRASADO_SESSAO">Paga atrasado por sessão</option>
+          <option value="ATRASADO_MES">Paga atrasado por mês</option>
+        </select>
+      </label>
+
+      <label class="campo">
+        <span>Data(s) do(s) atendimento(s)</span>
+        <input type="text" id="novaGuiaDatas" placeholder="Ex: 05/07, 12/07, 19/07">
+      </label>
+    </div>
+
+    <div style="margin-top:14px;">
+      <button type="button" class="botao-secundario" onclick="app.adicionarGuia()">
+        + Adicionar guia à lista
+      </button>
+    </div>
+
+    <div id="novoProtocoloErro" class="login-erro oculto" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="cartao">
+    <h2 class="cartao-titulo" style="font-size:15px;">
+      Guias deste protocolo (<span id="contadorGuias">0</span>)
+    </h2>
+
+    <div class="lista-guias" id="listaGuiasAdicionadas">
+      <div class="vazio-estado">Nenhuma guia adicionada ainda.</div>
+    </div>
+
+    <div style="display:flex; gap:12px; align-items:center; margin-top:6px;">
+      <button
+        type="button"
+        class="botao-primario"
+        id="botaoGerarProtocolo"
+        disabled
+        onclick="app.gerarProtocolo()"
+      >
+        Gerar protocolo e PDF
+      </button>
+
+      <span id="gerandoProtocoloTexto" class="oculto" style="font-size:13px; color:var(--cor-texto-suave);">
+        Gerando protocolo...
+      </span>
+    </div>
+  </div>
+</section>

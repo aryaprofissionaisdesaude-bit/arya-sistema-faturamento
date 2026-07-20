@@ -1,0 +1,542 @@
+<script>
+(function () {
+  'use strict';
+
+  var ARMAZENAMENTO_TOKEN = 'arya_portal_token';
+
+  function chamarServidor(nomeFuncao) {
+    var argumentos = Array.prototype.slice.call(arguments, 1);
+
+    return new Promise(function (resolve, reject) {
+      google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(function (erro) { reject(erro); })
+        [nomeFuncao].apply(null, argumentos);
+    });
+  }
+
+  var estado = {
+    token: null,
+    usuario: null,
+    perfil: null,
+    guiasNovoProtocolo: [],
+    pacientesCache: []
+  };
+
+  var app = {};
+  window.app = app;
+
+  /* ============================================================
+   * INICIALIZAÇÃO
+   * ============================================================ */
+
+  function iniciar() {
+    ligarFormularioLogin();
+
+    var tokenSalvo = null;
+
+    try {
+      tokenSalvo = window.localStorage.getItem(ARMAZENAMENTO_TOKEN);
+    } catch (erroArmazenamento) {
+      tokenSalvo = null;
+    }
+
+    if (!tokenSalvo) {
+      mostrarLogin();
+      return;
+    }
+
+    mostrarCarregamento(true);
+
+    chamarServidor('authValidarSessao', tokenSalvo)
+      .then(function (resposta) {
+        estado.token = tokenSalvo;
+        estado.usuario = resposta.usuario;
+        estado.perfil = resposta.perfil;
+        entrarNoPortal();
+      })
+      .catch(function () {
+        removerTokenSalvo_();
+        mostrarCarregamento(false);
+        mostrarLogin();
+      });
+  }
+
+  function removerTokenSalvo_() {
+    try {
+      window.localStorage.removeItem(ARMAZENAMENTO_TOKEN);
+    } catch (erroArmazenamento) { /* navegação privada, ignorar */ }
+  }
+
+  function mostrarCarregamento(mostrar) {
+    document.getElementById('telaCarregamento').classList.toggle('oculto', !mostrar);
+  }
+
+  function mostrarLogin() {
+    mostrarCarregamento(false);
+    document.getElementById('telaLogin').classList.remove('oculto');
+    document.getElementById('appPrincipal').classList.add('oculto');
+  }
+
+  function ligarFormularioLogin() {
+    var formulario = document.getElementById('formLogin');
+
+    formulario.addEventListener('submit', function (evento) {
+      evento.preventDefault();
+
+      var email = document.getElementById('loginEmail').value.trim();
+      var senha = document.getElementById('loginSenha').value;
+      var botao = document.getElementById('loginBotao');
+      var erro = document.getElementById('loginErro');
+
+      erro.classList.add('oculto');
+      erro.textContent = '';
+      botao.disabled = true;
+      botao.textContent = 'Entrando...';
+
+      chamarServidor('authEntrar', email, senha)
+        .then(function (resposta) {
+          estado.token = resposta.token;
+          estado.usuario = resposta.usuario;
+          estado.perfil = resposta.perfil;
+
+          try {
+            window.localStorage.setItem(ARMAZENAMENTO_TOKEN, resposta.token);
+          } catch (erroArmazenamento) { /* ignorar */ }
+
+          document.getElementById('telaLogin').classList.add('oculto');
+          entrarNoPortal();
+        })
+        .catch(function (erroRecebido) {
+          erro.textContent = extrairMensagemErro_(erroRecebido);
+          erro.classList.remove('oculto');
+        })
+        .then(function () {
+          botao.disabled = false;
+          botao.textContent = 'Entrar';
+        });
+    });
+  }
+
+  function entrarNoPortal() {
+    mostrarCarregamento(false);
+
+    document.getElementById('appPrincipal').classList.remove('oculto');
+
+    var nomeExibido = estado.usuario.NOME || estado.usuario.EMAIL || '';
+
+    document.getElementById('usuarioNome').textContent = nomeExibido;
+    document.getElementById('usuarioEmail').textContent = estado.usuario.EMAIL || '';
+    document.getElementById('usuarioAvatar').textContent = nomeExibido.charAt(0).toUpperCase() || '?';
+
+    carregarPacientes();
+
+    app.navegar('dashboard');
+  }
+
+  app.sair = function () {
+    var token = estado.token;
+    removerTokenSalvo_();
+
+    if (token) {
+      chamarServidor('authSair', token).catch(function () { /* ignorar */ });
+    }
+
+    window.location.reload();
+  };
+
+  /* ============================================================
+   * NAVEGAÇÃO ENTRE TELAS
+   * ============================================================ */
+
+  app.navegar = function (pagina) {
+    var paginas = document.querySelectorAll('.pagina');
+    paginas.forEach(function (elemento) {
+      elemento.classList.toggle('ativa', elemento.getAttribute('data-pagina') === pagina);
+    });
+
+    var botoesMenu = document.querySelectorAll('.menu-botao');
+    botoesMenu.forEach(function (botao) {
+      botao.classList.toggle('ativo', botao.getAttribute('data-pagina') === pagina);
+    });
+
+    var botoesMobile = document.querySelectorAll('.menu-mobile-botao');
+    botoesMobile.forEach(function (botao) {
+      botao.classList.toggle('ativo', botao.getAttribute('data-pagina-mobile') === pagina);
+    });
+
+    if (pagina === 'dashboard') {
+      carregarDashboard();
+    }
+
+    if (pagina === 'meus-protocolos') {
+      carregarMeusProtocolos();
+    }
+  };
+
+  /* ============================================================
+   * MENSAGENS / ERROS
+   * ============================================================ */
+
+  var temporizadorMensagem = null;
+
+  function mostrarMensagem(texto, tipo) {
+    var elemento = document.getElementById('mensagemGlobal');
+    elemento.textContent = texto;
+    elemento.className = 'mensagem-global visivel' + (tipo ? ' ' + tipo : '');
+
+    window.clearTimeout(temporizadorMensagem);
+    temporizadorMensagem = window.setTimeout(function () {
+      elemento.classList.remove('visivel');
+    }, 4200);
+  }
+
+  function extrairMensagemErro_(erro) {
+    if (!erro) { return 'Ocorreu um erro inesperado.'; }
+    if (typeof erro === 'string') { return erro; }
+    if (erro.message) { return String(erro.message); }
+    return String(erro);
+  }
+
+  function escaparHtml_(valor) {
+    return String(valor === undefined || valor === null ? '' : valor)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /* ============================================================
+   * DASHBOARD
+   * ============================================================ */
+
+  function carregarDashboard() {
+    document.getElementById('dashboardNome').textContent =
+      (estado.usuario && (estado.usuario.NOME || estado.usuario.EMAIL)) || '';
+
+    chamarServidor('protocolosListarMeusProtocolos', estado.token, { limite: 200 })
+      .then(function (resposta) {
+        var envios = resposta.envios || [];
+        renderizarResumoDashboard_(envios);
+        renderizarRecentesDashboard_(envios.slice(0, 5));
+      })
+      .catch(function (erro) {
+        mostrarMensagem(extrairMensagemErro_(erro), 'erro');
+      });
+  }
+
+  function renderizarResumoDashboard_(envios) {
+    var total = envios.length;
+
+    var emAnalise = envios.filter(function (e) {
+      return ['ENVIADO', 'EM_ANALISE', 'PENDENTE'].indexOf(e.status) !== -1;
+    }).length;
+
+    var aprovados = envios.filter(function (e) {
+      return ['APROVADO', 'APROVADO_COM_RESSALVAS', 'FATURADO'].indexOf(e.status) !== -1;
+    }).length;
+
+    var rascunhos = envios.filter(function (e) { return e.status === 'RASCUNHO'; }).length;
+
+    var container = document.getElementById('dashboardResumo');
+    container.innerHTML = '';
+
+    [
+      [total, 'Protocolos no total'],
+      [emAnalise, 'Em conferência'],
+      [aprovados, 'Aprovados / faturados'],
+      [rascunhos, 'Rascunhos']
+    ].forEach(function (par) {
+      var item = document.createElement('div');
+      item.className = 'resumo-item';
+      item.innerHTML =
+        '<div class="resumo-numero">' + par[0] + '</div>' +
+        '<div class="resumo-legenda">' + par[1] + '</div>';
+      container.appendChild(item);
+    });
+  }
+
+  function renderizarRecentesDashboard_(envios) {
+    var container = document.getElementById('dashboardRecentes');
+
+    if (envios.length === 0) {
+      container.innerHTML = '<div class="vazio-estado">Você ainda não gerou nenhum protocolo.</div>';
+      return;
+    }
+
+    container.innerHTML = montarTabelaProtocolos_(envios);
+  }
+
+  /* ============================================================
+   * PACIENTES (autocomplete e convênio automático)
+   * ============================================================ */
+
+  function carregarPacientes() {
+    chamarServidor('protocolosListarMeusPacientes', estado.token)
+      .then(function (pacientes) {
+        estado.pacientesCache = pacientes || [];
+
+        var lista = document.getElementById('listaPacientes');
+        lista.innerHTML = '';
+
+        estado.pacientesCache.forEach(function (paciente) {
+          var opcao = document.createElement('option');
+          opcao.value = paciente.nomeCompleto || paciente.nome || '';
+          lista.appendChild(opcao);
+        });
+      })
+      .catch(function () { /* autocomplete é acessório: falha silenciosa */ });
+  }
+
+  function encontrarPacienteCache_(nome) {
+    var nomeNormalizado = String(nome || '').trim().toLowerCase();
+
+    return estado.pacientesCache.find(function (p) {
+      return (p.nomeCompleto || p.nome || '').trim().toLowerCase() === nomeNormalizado;
+    });
+  }
+
+  app.selecionarPacienteDigitado = function () {
+    var tipo = document.getElementById('novaGuiaTipo').value;
+
+    if (tipo !== 'CONVENIO') { return; }
+
+    var paciente = encontrarPacienteCache_(document.getElementById('novaGuiaPaciente').value);
+
+    if (!paciente) { return; }
+
+    chamarServidor('protocolosObterConvenioDoPaciente', estado.token, paciente.idPaciente)
+      .then(function (info) {
+        if (info && info.nomeConvenio) {
+          document.getElementById('novaGuiaConvenio').value = info.nomeConvenio;
+        }
+      })
+      .catch(function () { /* preenchimento automático é acessório */ });
+  };
+
+  /* ============================================================
+   * NOVO PROTOCOLO — LISTA DE GUIAS (em memória, até gerar)
+   * ============================================================ */
+
+  app.alternarTipoGuia = function () {
+    var ehConvenio = document.getElementById('novaGuiaTipo').value === 'CONVENIO';
+
+    document.getElementById('campoConvenio').classList.toggle('oculto', !ehConvenio);
+    document.getElementById('campoValor').classList.toggle('oculto', ehConvenio);
+    document.getElementById('campoFormatoPagamento').classList.toggle('oculto', ehConvenio);
+  };
+
+  function exibirErroNovoProtocolo_(texto) {
+    var erroElemento = document.getElementById('novoProtocoloErro');
+    erroElemento.textContent = texto;
+    erroElemento.classList.remove('oculto');
+  }
+
+  function limparFormularioGuia_() {
+    document.getElementById('novaGuiaPaciente').value = '';
+    document.getElementById('novaGuiaConvenio').value = '';
+    document.getElementById('novaGuiaValor').value = '';
+    document.getElementById('novaGuiaDatas').value = '';
+    document.getElementById('novaGuiaPaciente').focus();
+  }
+
+  app.adicionarGuia = function () {
+    document.getElementById('novoProtocoloErro').classList.add('oculto');
+
+    var tipo = document.getElementById('novaGuiaTipo').value;
+    var pacienteNome = document.getElementById('novaGuiaPaciente').value.trim();
+    var datasTexto = document.getElementById('novaGuiaDatas').value.trim();
+
+    if (!pacienteNome) { return exibirErroNovoProtocolo_('Informe o nome do paciente.'); }
+    if (!datasTexto) { return exibirErroNovoProtocolo_('Informe ao menos uma data de atendimento.'); }
+
+    var pacienteEncontrado = encontrarPacienteCache_(pacienteNome);
+
+    var guia = {
+      tipo: tipo,
+      pacienteId: pacienteEncontrado ? pacienteEncontrado.idPaciente : '',
+      pacienteNome: pacienteNome,
+      datasAtendimento: datasTexto
+    };
+
+    if (tipo === 'CONVENIO') {
+      var convenioNome = document.getElementById('novaGuiaConvenio').value.trim();
+
+      if (!convenioNome) { return exibirErroNovoProtocolo_('Informe o convênio da guia.'); }
+
+      guia.convenioNome = convenioNome;
+    } else {
+      var valor = parseFloat(document.getElementById('novaGuiaValor').value);
+
+      if (!valor || valor <= 0) { return exibirErroNovoProtocolo_('Informe o valor da sessão/pacote.'); }
+
+      guia.valor = valor;
+      guia.formatoPagamento = document.getElementById('novaGuiaFormatoPagamento').value;
+    }
+
+    estado.guiasNovoProtocolo.push(guia);
+    renderizarListaGuias_();
+    limparFormularioGuia_();
+  };
+
+  app.removerGuia = function (indice) {
+    estado.guiasNovoProtocolo.splice(indice, 1);
+    renderizarListaGuias_();
+  };
+
+  var ROTULOS_FORMATO_PAGAMENTO = {
+    ADIANTADO_SESSAO: 'adiantado por sessão',
+    ADIANTADO_MES: 'adiantado por mês',
+    ATRASADO_SESSAO: 'atrasado por sessão',
+    ATRASADO_MES: 'atrasado por mês'
+  };
+
+  function renderizarListaGuias_() {
+    var container = document.getElementById('listaGuiasAdicionadas');
+    var contador = document.getElementById('contadorGuias');
+    var botaoGerar = document.getElementById('botaoGerarProtocolo');
+
+    contador.textContent = estado.guiasNovoProtocolo.length;
+    botaoGerar.disabled = estado.guiasNovoProtocolo.length === 0;
+
+    if (estado.guiasNovoProtocolo.length === 0) {
+      container.innerHTML = '<div class="vazio-estado">Nenhuma guia adicionada ainda.</div>';
+      return;
+    }
+
+    container.innerHTML = estado.guiasNovoProtocolo.map(function (guia, indice) {
+      var detalhe = guia.tipo === 'CONVENIO'
+        ? (
+            '<b>' + escaparHtml_(guia.pacienteNome) + '</b> — ' +
+            escaparHtml_(guia.convenioNome) + ' · ' +
+            escaparHtml_(guia.datasAtendimento)
+          )
+        : (
+            '<b>' + escaparHtml_(guia.pacienteNome) + '</b> — R$ ' +
+            Number(guia.valor).toFixed(2).replace('.', ',') +
+            ' (' + (ROTULOS_FORMATO_PAGAMENTO[guia.formatoPagamento] || '') + ') · ' +
+            escaparHtml_(guia.datasAtendimento)
+          );
+
+      return (
+        '<div class="guia-linha">' +
+        '<div class="guia-linha-ordem">' + (indice + 1) + '</div>' +
+        '<div class="guia-linha-detalhe">' +
+        '<span class="badge ' + (guia.tipo === 'CONVENIO' ? 'badge-enviado' : 'badge-aprovado') + '">' +
+        (guia.tipo === 'CONVENIO' ? 'Convênio' : 'Particular') +
+        '</span><br>' + detalhe +
+        '</div>' +
+        '<button type="button" class="guia-linha-remover" onclick="app.removerGuia(' + indice + ')">Remover</button>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  app.gerarProtocolo = function () {
+    if (estado.guiasNovoProtocolo.length === 0) { return; }
+
+    var botao = document.getElementById('botaoGerarProtocolo');
+    var textoGerando = document.getElementById('gerandoProtocoloTexto');
+
+    botao.disabled = true;
+    textoGerando.classList.remove('oculto');
+
+    // Abre a aba do PDF já no clique (gesto do usuário), para o navegador
+    // não bloquear como pop-up quando o link só fica pronto depois da
+    // resposta do servidor.
+    var abaPdf = window.open('', '_blank');
+
+    chamarServidor('protocolosGerarProtocolo', estado.token, { itens: estado.guiasNovoProtocolo })
+      .then(function (resposta) {
+        estado.guiasNovoProtocolo = [];
+        renderizarListaGuias_();
+        mostrarMensagem('Protocolo ' + resposta.numero + ' gerado com sucesso.', 'sucesso');
+
+        if (resposta.pdfUrl && abaPdf) {
+          abaPdf.location = resposta.pdfUrl;
+        } else if (abaPdf) {
+          abaPdf.close();
+        }
+
+        app.navegar('meus-protocolos');
+      })
+      .catch(function (erro) {
+        if (abaPdf) { abaPdf.close(); }
+        mostrarMensagem(extrairMensagemErro_(erro), 'erro');
+      })
+      .then(function () {
+        textoGerando.classList.add('oculto');
+        botao.disabled = estado.guiasNovoProtocolo.length === 0;
+      });
+  };
+
+  /* ============================================================
+   * MEUS PROTOCOLOS
+   * ============================================================ */
+
+  var ROTULOS_STATUS = {
+    RASCUNHO: 'Rascunho',
+    ENVIADO: 'Enviado',
+    EM_ANALISE: 'Em análise',
+    PENDENTE: 'Pendente',
+    APROVADO: 'Aprovado',
+    APROVADO_COM_RESSALVAS: 'Aprovado c/ ressalvas',
+    REJEITADO: 'Rejeitado',
+    FATURADO: 'Faturado',
+    CANCELADO: 'Cancelado'
+  };
+
+  function classeBadgeStatus_(status) {
+    return 'badge badge-' + String(status || '').toLowerCase().replace(/_/g, '-');
+  }
+
+  function montarTabelaProtocolos_(envios) {
+    var linhas = envios.map(function (envio) {
+      var data = envio.dataCriacao ? new Date(envio.dataCriacao).toLocaleDateString('pt-BR') : '—';
+
+      var linkPdf = envio.pdf && envio.pdf.url
+        ? '<a href="' + envio.pdf.url + '" target="_blank" rel="noopener">Abrir PDF</a>'
+        : '—';
+
+      return (
+        '<tr>' +
+        '<td><b>' + escaparHtml_(envio.numero) + '</b></td>' +
+        '<td>' + data + '</td>' +
+        '<td>' + envio.quantidadeItens + '</td>' +
+        '<td><span class="' + classeBadgeStatus_(envio.status) + '">' +
+        (ROTULOS_STATUS[envio.status] || envio.status) + '</span></td>' +
+        '<td>' + linkPdf + '</td>' +
+        '</tr>'
+      );
+    }).join('');
+
+    return (
+      '<table class="tabela-app"><thead><tr>' +
+      '<th>Protocolo</th><th>Data</th><th>Guias</th><th>Status</th><th>PDF</th>' +
+      '</tr></thead><tbody>' + linhas + '</tbody></table>'
+    );
+  }
+
+  function carregarMeusProtocolos() {
+    var container = document.getElementById('listaMeusProtocolos');
+    container.innerHTML = '<div class="vazio-estado">Carregando...</div>';
+
+    chamarServidor('protocolosListarMeusProtocolos', estado.token, { limite: 200 })
+      .then(function (resposta) {
+        var envios = resposta.envios || [];
+
+        if (envios.length === 0) {
+          container.innerHTML = '<div class="vazio-estado">Você ainda não gerou nenhum protocolo.</div>';
+          return;
+        }
+
+        container.innerHTML = montarTabelaProtocolos_(envios);
+      })
+      .catch(function (erro) {
+        container.innerHTML = '<div class="vazio-estado">' + escaparHtml_(extrairMensagemErro_(erro)) + '</div>';
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', iniciar);
+})();
+</script>

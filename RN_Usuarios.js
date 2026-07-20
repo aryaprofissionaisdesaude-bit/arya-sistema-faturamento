@@ -874,6 +874,13 @@ function rnUsuariosPossuiUmDosPerfis(
  * @return {string}
  */
 function rnuObterEmailUsuarioAtual_() {
+  if (
+    typeof AUTH_SESSAO_EMAIL_ATUAL_ !== 'undefined' &&
+    AUTH_SESSAO_EMAIL_ATUAL_
+  ) {
+    return AUTH_SESSAO_EMAIL_ATUAL_;
+  }
+
   var emailAtivo = '';
 
   try {

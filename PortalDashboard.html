@@ -1,0 +1,34 @@
+<section class="pagina ativa" data-pagina="dashboard" id="pagina-dashboard">
+  <div class="cartao">
+    <h1 class="cartao-titulo">Olá, <span id="dashboardNome">profissional</span></h1>
+    <p class="cartao-subtitulo">Resumo dos seus protocolos de faturamento.</p>
+
+    <div class="grade-resumo" id="dashboardResumo">
+      <div class="resumo-item">
+        <div class="resumo-numero">—</div>
+        <div class="resumo-legenda">Carregando...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cartao">
+    <h2 class="cartao-titulo" style="font-size:15px;">Ações rápidas</h2>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+      <button type="button" class="botao-primario" onclick="app.navegar('novo-protocolo')">
+        + Novo protocolo
+      </button>
+
+      <button type="button" class="botao-secundario" onclick="app.navegar('meus-protocolos')">
+        Ver meus protocolos
+      </button>
+    </div>
+  </div>
+
+  <div class="cartao">
+    <h2 class="cartao-titulo" style="font-size:15px;">Protocolos recentes</h2>
+    <div id="dashboardRecentes">
+      <div class="vazio-estado">Carregando...</div>
+    </div>
+  </div>
+</section>

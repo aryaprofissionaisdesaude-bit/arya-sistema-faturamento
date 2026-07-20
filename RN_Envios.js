@@ -2234,6 +2234,13 @@ function rnEnviosResolverUsuario_(valor) {
 
 
 function rnEnviosObterEmailSessao_() {
+  if (
+    typeof AUTH_SESSAO_EMAIL_ATUAL_ !== 'undefined' &&
+    AUTH_SESSAO_EMAIL_ATUAL_
+  ) {
+    return AUTH_SESSAO_EMAIL_ATUAL_;
+  }
+
   try {
     return (
       Session
